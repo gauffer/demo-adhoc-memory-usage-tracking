@@ -1,6 +1,14 @@
 # Demo of Adhoc Memory Usage Tracking
 
-Track and visualize memory usage in Go applications.
+Track and visualize memory usage in the Go application.
+
+We use a bash script to track memory usage by reading VmRSS from `/proc/<pid>/status`. 
+
+## Limitations
+
+- VmRSS measures only physical memory, excluding shared memory, leading to potential underestimation.
+- The script captures data every second, missing rapid memory fluctuations.
+- If the process ends, logging stops, losing critical pre-termination data.
 
 ## Prerequisites
 
