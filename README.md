@@ -12,8 +12,8 @@ We use a bash script to track memory usage by reading VmRSS from `/proc/<pid>/st
 
 ## Prerequisites
 
-- Go 1.20+
-- Python 3.10+
+- Go 1.20
+- Python 3.10
 - Python libraries: `pandas`, `matplotlib`
 - k6 for load testing
 
@@ -30,29 +30,37 @@ pip install pandas matplotlib
 
 ## Usage
 
-1. **Run Tracking and Load Test:**
-   ```bash
-   ./run_all.sh "go run cmd/server_http"
-   ```
-
-2. **Generate Plot:**
-   ```bash
-   python3 plot_mem.py
-   ```
-
-3. **Open Plot:**
-   ```bash
-   open out/memory_usage_plot_normalized.png
-   ```
-
-### Explanation of `run_all.sh` Script
-
-1. **Start the Go server** and retrieve its PID.
-2. **Run memory tracking** and load tests using `k6`.
-3. **Stop the server** and save memory usage data.
+```bash
+./run_all.sh "go run cmd/server_http"
+python3 plot_mem.py
+open out/memory_usage_plot_normalized.png
+```
 
 ### Example Output
 
 The graph shows memory rising from 5MB to 500MB in 10 seconds under 20,000 RPS. This intentional goroutine leak causes linear memory growth, a common symptom of memory leaks.
 
 ![Memory Usage](bad.png)
+
+
+## Explanation of `run_all.sh`
+
+1. Start the Go server and retrieve its PID.
+2. Run memory tracking and load tests using `k6`.
+3. Stop the server and save memory usage data.
+
+### Hardcoded Port
+
+The server must run on a hardcoded port: **8080**.
+
+```sh
+start_go_server() {
+    $go_server_command > /dev/null 2>&1 &
+    # go_server_pid=$!
+    sleep 2  # ensure the server starts
+    server_pid=$(lsof -i :8080 | awk '/LISTEN/ {print $2}' | head -n 1)
+}
+```
+**Note:** To change the port, update the `lsof -i :8080` command or extend the script to accept the port as an argument.
+
+With `go run`, `$go_server_pid` captures the PID of the `go run` process, the PID from `lsof -i :8080` will be different.
