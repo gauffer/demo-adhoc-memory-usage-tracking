@@ -52,6 +52,7 @@ The graph shows memory rising from 5MB to 500MB in 10 seconds under 20,000 RPS. 
 ### Hardcoded Port
 
 The server must run on a hardcoded port: **8080**.
+Appending a channel to a slice increases memory usage slightly since it only adds a reference to the channel, which is just a few bytes. This impact is negligible.
 
 ```sh
 start_go_server() {
@@ -64,3 +65,41 @@ start_go_server() {
 **Note:** To change the port, update the `lsof -i :8080` command or extend the script to accept the port as an argument.
 
 With `go run`, `$go_server_pid` captures the PID of the `go run` process, the PID from `lsof -i :8080` will be different.
+
+
+
+## Memory Leak
+```go
+...
+var (
+	counter  int64
+	channels []chan struct{}
+)
+...
+go func() {
+    ch := make(chan struct{})
+    channels = append(channels, ch)
+    <-ch // Will wait forever
+}()
+...
+```
+
+### Explanation
+
+**Appending to the `channels` slice:**
+
+Appending a channel to a slice increases memory usage slightly since it only adds a reference to the channel, which is just a few bytes. This impact is negligible.
+```go
+channels = append(channels, ch)
+```
+
+**Impact of `var channels []chan struct{}` on Memory Leak:**
+
+The channels slice has minimal impact on memory. Adding channels grows the slice, but the references are small compared to the memory used by goroutines. The slice's memory use is proportional to its references, while goroutines dominate memory usage.
+
+**Receiving from the channel (`<-ch`):**
+
+The major memory leak is caused by <-ch operations
+```go
+<-ch // Will wait forever
+```
