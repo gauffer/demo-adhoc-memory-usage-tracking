@@ -52,7 +52,6 @@ The graph shows memory rising from 5MB to 500MB in 10 seconds under 20,000 RPS. 
 ### Hardcoded Port
 
 The server must run on a hardcoded port: **8080**.
-Appending a channel to a slice increases memory usage slightly since it only adds a reference to the channel, which is just a few bytes. This impact is negligible.
 
 ```sh
 start_go_server() {
